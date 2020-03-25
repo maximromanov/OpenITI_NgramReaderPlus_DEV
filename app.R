@@ -20,12 +20,7 @@ library(tidyverse)
 
 #setwd("/Users/romanovienna/_ADHFANIS_Data/NGRAMS/OpenITI_NgramReaderPlus_DEV_GITHUB/") # for debugging
 
-#ngramsNew   <- readRDS("./data/ngrams_1x3.rds")
-#allFreqsNew <- readRDS("./data/ngrams_1x3C.rds")
-#allFreqsNew <- allFreqsNew[1,]
-#allFreqsNew <- as.integer(as.vector(allFreqsNew[3:31]))+1
-
-ngramsNew <- readRDS("./data/ngrams_1x3_step25.rds")
+ngramsNew <- readRDS("./data/ngrams_1x5_step25.rds")
 allFreqsNew <- ngramsNew %>% select(-ngram,-freq) %>% colSums()
 periods <- as.numeric(names(allFreqsNew))
 
@@ -111,7 +106,7 @@ ahAxis <- list(
   #tickvals = periods,
   showticklabels = TRUE,
   side = "bottom",
-  title = paste0("<b>Generated with:</b> OpenITI NgramReader+ @DEV_VERSION@ v.2020.2 (Maxim Romanov) <b>Data:</b> OpenITI Corpus (ver. 2019.1.1) <b>Date:</b> ",
+  title = paste0("<b>Generated with:</b> OpenITI NgramReader+ @DEV_VERSION@ v.2020-DEV (Maxim Romanov) <b>Data:</b> OpenITI Corpus (ver. 2019.1.1) <b>Date:</b> ",
                  format(Sys.time(), "%b %d, %Y")),#https://maximromanov.shinyapps.io/natharat/
   range = c(0, periods[length(periods)]+periods[2]),
   titlefont = xAxisFont
@@ -169,11 +164,12 @@ ui <- shinyUI(
     #theme = shinytheme("united"), # spacelab+, simplex, readable+, lumen, journal, united,
     theme = "united.min.css",
     div(img(src = "RM_inverse.png", height = "25"),
-        "OpenITI NgramReader+ @DEV_VERSION@ v.2020.2"), # "Naṯarāt al-ʿUṣūr min al-Muʿaṣṣarāt al-Manṯūr"
-    windowTitle = "OpenITI NgramReader+ @DEV_VERSION@ v.2020.2",
+        "OpenITI NgramReader+ @DEV_VERSION@ v.2020-DEV"), # "Naṯarāt al-ʿUṣūr min al-Muʿaṣṣarāt al-Manṯūr"
+    windowTitle = "OpenITI NgramReader+ @DEV_VERSION@ v.2020-DEV",
     tabPanel(title = "Ngram Graphs",
              
              sidebarPanel(
+               includeMarkdown("./www/development_version.md"),br(),
                includeMarkdown("./www/intro_short.md"),br(),
                textInput(inputId="text1", label = "Line 1", value = "#ḥaddaṯanā #[wf]?Hdvn[Ay]"),
                textInput(inputId="text2", label = "Line 2", value = "#aḫbaranā #[wf]?Axbrn[Ay]"),
@@ -207,6 +203,7 @@ ui <- shinyUI(
     tabPanel(title = "About",
              sidebarPanel(
                #h4("Transliteration scheme"),
+               includeMarkdown("./www/development_version.md"),br(),
                includeMarkdown("./www/citation.md")
              ),
              mainPanel(

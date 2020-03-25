@@ -1,4 +1,3 @@
-**[DEVELOPMENT VERSION Lite (*al-Ṣuġrá)]**
 
 Syntax for the searches is as follows: `#ItemForTheLegend #FirstSearchItem #SecondSearchItem #NthSearchItem`, that is each item must begin with `#`. `#ItemForTheLegend` is not a search item but a string that you want to show on the legend of the graph. Thus, if you were to look for mentions of Baġdād, your search line would look like this `#Baġdād #bgdAd #bbgdAd #wbgdAd #wbbgdAd` (Keep in mind the legend will appear only if there are more than one line.) Try searching for these tokens in one line and in separate lines to see the difference. If you search for bigrams, use `underscore` "_" instead of a space, i.e. *kataba ilay-hi* should be transliterated as `ktb_Alyh`. Bigrams are only available in Medium (al-Wusṭá) and Full (al-Kubrá) versions of NgramReader+.
 
