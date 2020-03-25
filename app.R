@@ -1,5 +1,5 @@
 ############################################################################################
-# OpenITI NgramReader+ @DEWERSION@ v.2020.1 ##################################################
+# OpenITI NgramReader+ @DEV_VERSION@ v.2020.1 ##############################################
 ############################################################################################
 
 ############################################################################################
@@ -12,17 +12,23 @@ library(data.table)
 library(plotly)
 require(markdown)
 library(stringr)
+library(tidyverse)
 
 ############################################################################################
 # 0.1 Loading Data #########################################################################
 ############################################################################################
 
-#setwd("/Users/romanovienna/_ADHFANIS_Data/NGRAMS/_OpenITI_NgramReaderPlus_Lite/") # for debugging
+#setwd("/Users/romanovienna/_ADHFANIS_Data/NGRAMS/OpenITI_NgramReaderPlus_DEV_GITHUB/") # for debugging
 
-ngramsNew   <- readRDS("./data/ngrams_1x3.rds")
-allFreqsNew <- readRDS("./data/ngrams_1x3C.rds")
-allFreqsNew <- allFreqsNew[1,]
-allFreqsNew <- as.integer(as.vector(allFreqsNew[3:31]))+1
+#ngramsNew   <- readRDS("./data/ngrams_1x3.rds")
+#allFreqsNew <- readRDS("./data/ngrams_1x3C.rds")
+#allFreqsNew <- allFreqsNew[1,]
+#allFreqsNew <- as.integer(as.vector(allFreqsNew[3:31]))+1
+
+ngramsNew <- readRDS("./data/ngrams_1x3_step25.rds")
+allFreqsNew <- ngramsNew %>% select(-ngram,-freq) %>% colSums()
+periods <- as.numeric(names(allFreqsNew))
+
 ngrams <- ngramsNew
 allFreqs <- allFreqsNew
 
@@ -46,10 +52,9 @@ filterData <- function(freqTable, searchVars){
 }
 
 #filterData(freqTable, searchVars)
-spanVar = .3
+spanVar = 0.2
 
-wordFreqSmooth <- function(freqTable, relVector, item, spanVar){
-  periods = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
+wordFreqSmooth <- function(freqTable, relVector, item, spanVar, periods){
   item = gsub("^#", "", item)
   item = gsub(" ?#", "|", item)
   item = paste0("^(", item, ")$")
@@ -57,16 +62,16 @@ wordFreqSmooth <- function(freqTable, relVector, item, spanVar){
   tempData = subset(tempData, select = -c(ngram, freq))
   tempData = colSums(tempData)
   tempData = as.integer(as.vector(tempData))
-  tempData = tempData[1:29]/relVector
+  tempData = tempData/relVector
   smoothingmainVar = tempData
   smoothingmainVar = predict(loess(tempData~periods, span=spanVar))
   smoothingmainVar[smoothingmainVar < 0] = 0
-  #smoothingmainVar = tempData
+  #smoothingmainVar = prepend(smoothingmainVar, 0, before=1)
   return(smoothingmainVar)
 }
 
-wordFreq <- function(freqTable, relVector, item){
-  periods = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
+wordFreq <- function(freqTable, relVector, item, periods){
+  #periods = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
   item = gsub("^#", "", item)
   item = gsub(" ?#", "|", item)
   item = paste0("^(", item, ")$")
@@ -74,18 +79,18 @@ wordFreq <- function(freqTable, relVector, item){
   tempData = subset(tempData, select = -c(ngram, freq))
   tempData = colSums(tempData)
   tempData = as.integer(as.vector(tempData))
-  tempData = tempData[1:29]/relVector
+  tempData = tempData/relVector
   return(tempData)
 }
 
-periods = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
-xlabVarAH = c(1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400)
+#periods = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
+#xlabVarAH = c(1, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400)
 #xlabVarAH = c(0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400)
-xlabVarCE = as.integer((xlabVarAH-xlabVarAH/33)+622)
+periodsCE = as.integer((periods-periods/33)+622)
 
-datesCE = paste0(xlabVarCE, "")
-datesAH = paste0(xlabVarAH, "/")
-dateLabels = paste0(datesAH, datesCE)
+datesCE = paste0(periodsCE, "")
+datesAH = paste0(periods, "/")
+dateLabels = paste0(periods, periodsCE)
 
 ############################################################################################
 # 0.3 Plot.ly Visual Elements ##############################################################
@@ -103,12 +108,12 @@ xAxisFont <- list(
 ahAxis <- list(
   tickfont = list(color = "black"),
   #ticktext = xlabVarAH, #dateLabels, # paste0(as.character(periods),"ah"),
-  tickvals = xlabVarAH,
+  #tickvals = periods,
   showticklabels = TRUE,
   side = "bottom",
-  title = paste0("<b>Generated with:</b> OpenITI NgramReader+ @DEWERSION@ v.2020.1 (Maxim Romanov) <b>Data:</b> OpenITI Corpus (ver. 2019.1.1) <b>Date:</b> ", format(Sys.time(), "%b %d, %Y")),#https://maximromanov.shinyapps.io/natharat/
-  #range = xlabVarCE,
-  range = c(0, 1450),
+  title = paste0("<b>Generated with:</b> OpenITI NgramReader+ @DEV_VERSION@ v.2020.2 (Maxim Romanov) <b>Data:</b> OpenITI Corpus (ver. 2019.1.1) <b>Date:</b> ",
+                 format(Sys.time(), "%b %d, %Y")),#https://maximromanov.shinyapps.io/natharat/
+  range = c(0, periods[length(periods)]+periods[2]),
   titlefont = xAxisFont
 )
 
@@ -135,7 +140,7 @@ legendFont <- list(
 # SAVE CONFIG for SVG Files
 saveConfig <- list(
   format = "svg", # "svg", "png"
-  filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S")), # add a timestamp to the name here?
+  filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S")),
   width = 1100,
   height = 500
 )
@@ -164,8 +169,8 @@ ui <- shinyUI(
     #theme = shinytheme("united"), # spacelab+, simplex, readable+, lumen, journal, united,
     theme = "united.min.css",
     div(img(src = "RM_inverse.png", height = "25"),
-        "OpenITI NgramReader+ @DEWERSION@ v.2020"), # "Naṯarāt al-ʿUṣūr min al-Muʿaṣṣarāt al-Manṯūr"
-    windowTitle = "OpenITI NgramReader+ @DEWERSION@ v.2020",
+        "OpenITI NgramReader+ @DEV_VERSION@ v.2020.2"), # "Naṯarāt al-ʿUṣūr min al-Muʿaṣṣarāt al-Manṯūr"
+    windowTitle = "OpenITI NgramReader+ @DEV_VERSION@ v.2020.2",
     tabPanel(title = "Ngram Graphs",
              
              sidebarPanel(
@@ -182,7 +187,9 @@ ui <- shinyUI(
                h3("Graphs of Relative and Absolute Frequencies of Ngrams"),
                #includeMarkdown("./www/BuckwalterSimplified.txt"), br(),
                plotlyOutput("plotly1"),br(),
+               plotlyOutput("plotly1A"),br(),
                plotlyOutput("plotly2"),br(),
+               plotlyOutput("plotly2A"),br(),
                #h4("Results Data Table"),
                #dataTableOutput('resultsTable'),              
                includeMarkdown("./www/citation.md"), br()
@@ -235,22 +242,16 @@ server <- shinyServer(
     
     # You can access the value of the widget with input$text, e.g.
     #output$value <- renderPrint({ c(input$text1, input$text2, input$text3, input$text4, input$text5) })
-    
-    # Plotly Graph with interactivity
+        
+    # Plotly Graph with interactivity: relative numbers
     output$plotly1 <- renderPlotly({
       #searchVector = c(input$text1, input$text2, input$text3, input$text4, input$text5)
-      
-      maximum = c()
-      for (n in searchVector()){
-        lineN = wordFreqSmooth(ngrams, allFreqs/100, n, spanVar)
-        maximum = c(maximum, lineN)
-      }
-      maximum = max(maximum)
-      
+      div = allFreqs/100
+
       # generating plot_ly
       perAxis <- list(
         tickfont = list(color = "black"), showticklabels = TRUE, side = "left",
-        title = "Relative frequency (%)"
+        title = "relative frequencies (%)"
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
@@ -265,11 +266,8 @@ server <- shinyServer(
           searchVectorNew = c(searchVectorNew,n)
 
           # actual data
-          div = allFreqs/100
-          
-          lineA = wordFreq(filteredData(), div, n)
+          lineA = wordFreq(filteredData(), div, n, periods)
           lineA[lineA == 0] <- NA
-          #print(lineA)
  
           plotlyGraph <- add_trace(plotlyGraph, y=lineA, x=periods,
                                    type="scatter", mode="markers+lines", connectgaps = F,
@@ -278,20 +276,7 @@ server <- shinyServer(
                                    text = ~paste0(#'Frequency: ', lineA, '<br>', # for some reason the same values added to all lines...
                                      'Date:', periods,
                                      '/', as.integer((periods-periods/33)+622), "CE")
-          )         
-          
-          # # lowess line
-          # lineL = wordFreqSmooth(filteredData(), div, n, spanVar)
-          # lineL[lineL == 0] <- NA
-          # 
-          # plotlyGraph <- add_trace(plotlyGraph, y=lineL, x=periods,
-          #                          type="scatter", mode="markers+lines", connectgaps = F,
-          #                          name=legendItem(n),
-          #                          hoverinfo = 'text',
-          #                          text = ~paste0(#'Frequency: ', lineL, '<br>', # for some reason the same values added to all lines...
-          #                            'Date:', periods,
-          #                            '/', as.integer((periods-periods/33)+622), "CE")
-          #                          )
+                                   )
         }
       }
       
@@ -304,23 +289,63 @@ server <- shinyServer(
       
     })
     
-    
-    # Plotly Graph with interactivity: absolute numbers
-    output$plotly2 <- renderPlotly({
-      
+    # Plotly Graph with interactivity: relative numbers (with LOWESS CURVE)
+    output$plotly1A <- renderPlotly({
       #searchVector = c(input$text1, input$text2, input$text3, input$text4, input$text5)
-      
-      maximum = c()
-      for (n in searchVector()){
-        lineN = wordFreqSmooth(filteredData(), 1, n, spanVar)
-        maximum = c(maximum, lineN)
-      }
-      maximum = max(maximum)
+      div = allFreqs/100
       
       # generating plot_ly
       perAxis <- list(
         tickfont = list(color = "black"), showticklabels = TRUE, side = "left",
-        title = "Absolute frequency"
+        title = paste0("relative frequencies (%) with LOESS smoothing (", spanVar, ")")
+      )
+      
+      plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
+        config(toImageButtonOptions = saveConfig)
+      
+      # generating data
+      counter = 0
+      searchVectorNew = c()
+      for (n in searchVector()){
+        if(n != ""){
+          counter = counter+1
+          searchVectorNew = c(searchVectorNew,n)
+          
+          # actual data
+          #lineA = wordFreq(filteredData(), div, n, periods)
+          lineA = wordFreqSmooth(filteredData(), div, n, spanVar, periods)
+          lineA = prepend(lineA, 0, before=1)
+          lineA[lineA == 0] <- NA
+          
+          plotlyGraph <- add_trace(plotlyGraph, y=lineA, x=periods,
+                                   type="scatter", mode="markers+lines", connectgaps = F,
+                                   name=legendItem(n),
+                                   hoverinfo = 'text',
+                                   text = ~paste0(#'Frequency: ', lineA, '<br>', # for some reason the same values added to all lines...
+                                     'Date:', periods,
+                                     '/', as.integer((periods-periods/33)+622), "CE")
+          )
+        }
+      }
+      
+      plotlyGraph %>%
+        layout(
+          legend = legendConfig,
+          xaxis  = ahAxis, yaxis  = perAxis,
+          images = logoConfig
+        )
+      
+    })
+    
+    # Plotly Graph with interactivity: absolute numbers
+    output$plotly2 <- renderPlotly({
+      div = 1
+      #searchVector = c(input$text1, input$text2, input$text3, input$text4, input$text5)
+      
+      # generating plot_ly
+      perAxis <- list(
+        tickfont = list(color = "black"), showticklabels = TRUE, side = "left",
+        title = "absolute frequencies"
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
@@ -334,11 +359,8 @@ server <- shinyServer(
           searchVectorNew = c(searchVectorNew,n)
           
           # actual data
-          div = 1
-          
-          lineA = wordFreq(filteredData(), div, n)
+          lineA = wordFreq(filteredData(), div, n, periods)
           lineA[lineA == 0] <- NA
-          #print(lineA)
           
           plotlyGraph <- add_trace(plotlyGraph, y=lineA, x=periods,
                                    type="scatter", mode="markers+lines", connectgaps = F,
@@ -347,20 +369,54 @@ server <- shinyServer(
                                    text = ~paste0(#'Frequency: ', lineA, '<br>', # for some reason the same values added to all lines...
                                      'Date:', periods,
                                      '/', as.integer((periods-periods/33)+622), "CE")
-          )         
+                                   )         
           
-          # # lowess line
-          # lineL = wordFreqSmooth(filteredData(), div, n, spanVar)
-          # lineL[lineL == 0] <- NA
-          # 
-          # plotlyGraph <- add_trace(plotlyGraph, y=lineL, x=periods,
-          #                          type="scatter", mode="markers+lines", connectgaps = F,
-          #                          name=legendItem(n),
-          #                          hoverinfo = 'text',
-          #                          text = ~paste0(#'Frequency: ', lineL, '<br>', # for some reason the same values added to all lines...
-          #                            'Date:', periods,
-          #                            '/', as.integer((periods-periods/33)+622), "CE")
-          #                          )
+        }
+      }
+      
+      plotlyGraph %>%
+        layout(
+          legend = legendConfig,
+          xaxis  = ahAxis, yaxis  = perAxis,
+          images = logoConfig
+        )
+      
+    })
+
+    # Plotly Graph with interactivity: absolute numbers (with LOWESS CURVE)
+    output$plotly2A <- renderPlotly({
+      #searchVector = c(input$text1, input$text2, input$text3, input$text4, input$text5)
+      div = 1
+      
+      # generating plot_ly
+      perAxis <- list(
+        tickfont = list(color = "black"), showticklabels = TRUE, side = "left",
+        title = paste0("absolute frequencies with LOESS smoothing (", spanVar, ")")
+      )
+      
+      plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
+        config(toImageButtonOptions = saveConfig)
+      
+      # generating data
+      counter = 0
+      searchVectorNew = c()
+      for (n in searchVector()){
+        if(n != ""){
+          counter = counter+1
+          searchVectorNew = c(searchVectorNew,n)
+          
+          # actual data
+          lineA = wordFreqSmooth(filteredData(), div, n, spanVar, periods)
+          lineA[lineA == 0] <- NA
+          
+          plotlyGraph <- add_trace(plotlyGraph, y=lineA, x=periods,
+                                   type="scatter", mode="markers+lines", connectgaps = F,
+                                   name=legendItem(n),
+                                   hoverinfo = 'text',
+                                   text = ~paste0(#'Frequency: ', lineA, '<br>', # for some reason the same values added to all lines...
+                                     'Date:', periods,
+                                     '/', as.integer((periods-periods/33)+622), "CE")
+          )
         }
       }
       
@@ -373,6 +429,7 @@ server <- shinyServer(
       
     })
     
+        
   }
 )
 
