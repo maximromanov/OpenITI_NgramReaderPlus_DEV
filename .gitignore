@@ -2,3 +2,6 @@
 
 data/*.rds
 rsconnect/
+
+.RData
+.Rhistory
