@@ -136,8 +136,23 @@ legendFont <- list(
 saveConfig <- list(
   format = "svg", # "svg", "png"
   filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S")),
-  width = 1100,
-  height = 500
+  width = 1100, height = 500
+)
+
+saveConfig1 <- list(format = "svg",   width = 1100, height = 500,
+                    filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S"), "_ABS")
+)
+
+saveConfig1A <- list(format = "svg",   width = 1100, height = 500,
+                    filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S"), "_ABS_L")
+)
+
+saveConfig2 <- list(format = "svg",   width = 1100, height = 500,
+                     filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S"), "_REL")
+)
+
+saveConfig2A <- list(format = "svg",   width = 1100, height = 500,
+                    filename = paste0("ngramReader_OpenITI_",format(Sys.time(), "D%Y%m%dT%H%M%S"), "_REL_L")
 )
 
 # logoConfig <- list(
@@ -252,7 +267,7 @@ server <- shinyServer(
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
-        config(toImageButtonOptions = saveConfig)
+        config(toImageButtonOptions = saveConfig1)
       
       # generating data
       counter = 0
@@ -298,7 +313,7 @@ server <- shinyServer(
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
-        config(toImageButtonOptions = saveConfig)
+        config(toImageButtonOptions = saveConfig1A)
       
       # generating data
       counter = 0
@@ -346,7 +361,7 @@ server <- shinyServer(
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
-        config(toImageButtonOptions = saveConfig)
+        config(toImageButtonOptions = saveConfig2)
       
       counter = 0
       searchVectorNew = c()
@@ -392,7 +407,7 @@ server <- shinyServer(
       )
       
       plotlyGraph = plot_ly(type="scatter", mode="markers+lines") %>%
-        config(toImageButtonOptions = saveConfig)
+        config(toImageButtonOptions = saveConfig2A)
       
       # generating data
       counter = 0
